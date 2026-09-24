@@ -21,6 +21,12 @@ class PetriNet:
     def add_transition(self, name, id):
         self.transitions[id] = name
 
+    def transition_name_to_id(self, name):
+        for k, v in self.transitions.items():
+            if v == name:
+                return k
+        raise KeyError(name)
+
     def add_edge(self, source, target):
 
         if target not in self.pre:
