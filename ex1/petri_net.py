@@ -7,6 +7,8 @@ class PetriNet:
         #set of transitions T hashmap (name, id)
         self.transitions = dict()
 
+        self.name_to_id = {}
+
         #flow relation is two adjacency maps (for pre and post)
         self.pre = dict()
         self.post = dict()
@@ -20,12 +22,10 @@ class PetriNet:
 
     def add_transition(self, name, id):
         self.transitions[id] = name
+        self.name_to_id[name] = id
 
     def transition_name_to_id(self, name):
-        for k, v in self.transitions.items():
-            if v == name:
-                return k
-        raise KeyError(name)
+        return self.name_to_id[name]
 
     def add_edge(self, source, target):
 
@@ -49,9 +49,6 @@ class PetriNet:
         return True
 
     def add_marking(self, place):
-        if place not in self.tokens:
-            self.tokens[place] = set()
-
         self.tokens[place] = self.tokens.get(place, 0) + 1
 
     def fire_transition(self, transition):
