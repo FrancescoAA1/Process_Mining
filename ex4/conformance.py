@@ -7,6 +7,7 @@ class GraphDiscovery:
     def __init__(self):
         pass
 
+
     def read_from_file(self, filename):
         def tag(element):
             return element.tag.rsplit("}", 1)[-1]
@@ -30,6 +31,8 @@ class GraphDiscovery:
                     raise ValueError("Invalid XES boolean")
                 value = value in ("true", "1")
             return key, value
+
+
 
         root = ET.parse(filename).getroot()
         cases = {}
@@ -58,6 +61,8 @@ class GraphDiscovery:
                 events.append(data)
             cases[case_id] = events
         return cases
+
+
 
 
 class PetriNet:
@@ -124,6 +129,34 @@ class PetriNet:
             for target in self.post.get(transition, set()):
                 self.tokens[target] = self.tokens.get(target, 0) + 1
 
+    def reset_tokens(self):
+        for place in self.places:
+            self.tokens[place] = 0
+
+    def total_tokens(self):
+        return sum(self.tokens.values())
+
+    def force_fire(self, transition):
+        #fire even if not enabled, returns (missing, consumed, produced)
+        missing = 0
+        consumed = 0
+        produced = 0
+
+        for source in self.pre.get(transition, set()):
+            if self.tokens.get(source, 0) < 1:
+                self.tokens[source] = self.tokens.get(source, 0) + 1
+                missing += 1
+            self.tokens[source] -= 1
+            consumed += 1
+
+        for target in self.post.get(transition, set()):
+            self.tokens[target] = self.tokens.get(target, 0) + 1
+            produced += 1
+
+        return missing, consumed, produced
+
+
+
 
 def alpha(log):
     activities = set()
@@ -189,6 +222,8 @@ def alpha(log):
                 place_candidates.add((frozenset({a}), frozenset({b})))
 
     changed = True
+
+
 
     while changed:
         changed = False
@@ -267,3 +302,4 @@ _graph_discovery = GraphDiscovery()
 
 def read_from_file(filename):
     return _graph_discovery.read_from_file(filename)
+
