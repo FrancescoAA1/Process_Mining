@@ -303,3 +303,59 @@ _graph_discovery = GraphDiscovery()
 def read_from_file(filename):
     return _graph_discovery.read_from_file(filename)
 
+
+def fitness_token_replay(log, model):
+    start_place = "__start__"
+    end_place = "__end__"
+
+    total_m = 0
+    total_c = 0
+    total_r = 0
+    total_p = 0
+
+    for case in log.values():
+        model.reset_tokens()
+
+        #initial token in the start place
+        model.add_marking(start_place)
+        m = 0
+        c = 0
+        p = 1
+
+        for event in case:
+            t = model.transition_name_to_id(event["concept:name"])
+            missing, consumed, produced = model.force_fire(t)
+            m += missing
+            c += consumed
+            p += produced
+
+        #consume the final token from the end place
+        if model.get_tokens(end_place) < 1:
+            m += 1
+        else:
+            model.tokens[end_place] -= 1
+        c += 1
+
+        r = model.total_tokens()
+
+        total_m += m
+        total_c += c
+        total_r += r
+        total_p += p
+
+    model.reset_tokens()
+    model.add_marking(start_place)
+
+    return 0.5 * (1 - total_m / total_c) + 0.5 * (1 - total_r / total_p)
+
+
+if __name__ == "__main__":
+    from pathlib import Path
+
+    folder = Path(__file__).resolve().parent
+    log = read_from_file(str(folder / "extension-log-4.xes"))
+    log_noisy = read_from_file(str(folder / "extension-log-noisy-4.xes"))
+
+    mined_model = alpha(log)
+    print(round(fitness_token_replay(log, mined_model), 5))
+    print(round(fitness_token_replay(log_noisy, mined_model), 5))
